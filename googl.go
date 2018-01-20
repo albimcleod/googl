@@ -1,7 +1,9 @@
 package googl
 
 import (
+	"encoding/json"
 	"fmt"
+
 	"github.com/parnurzeal/gorequest"
 )
 
@@ -26,7 +28,7 @@ func NewClient(key string) *Googl {
 	return &Googl{Key: key}
 }
 
-func (c *Googl) Shorten(url string) string {
+func (c *Googl) Shorten(url string) (*ShortMsg, error) {
 	request := gorequest.New()
 	var response string
 
@@ -42,13 +44,22 @@ func (c *Googl) Shorten(url string) string {
 			Send(`{"longUrl":"` + url + `"}`).End()
 		if resp.Status == "200 OK" {
 			fmt.Println(body)
-			response = "Done! Ok!"
+
+			resp := ShortMsg{}
+
+			err := json.Unmarshal([]byte(body), &resp)
+
+			if err != nil {
+				return nil, err
+			}
+			return &resp, nil
+
 		} else {
 			response = "Some error occurred, please try again later"
 		}
 	}
 
-	return response
+	return nil, fmt.Errorf("%v", response)
 }
 
 func (c *Googl) Expand(shortUrl string) string {
